@@ -31,15 +31,31 @@
  import java.nio.file.Path;
  
  /**
-  * Class description here.
+  * This class implements the {@link Compiler} interface for recipes.
+  * It provides methods to compile directives from various sources like
+  * strings, locations, and file paths.
   */
  public final class RecipeCompiler implements Compiler {
  
+   /**
+    * Compiles a recipe from a string.
+    *
+    * @param recipe The recipe string to be compiled
+    * @return The compilation status
+    * @throws CompileException If there is an error during compilation
+    */
    @Override
    public CompileStatus compile(String recipe) throws CompileException {
      return compile(CharStreams.fromString(recipe));
    }
  
+   /**
+    * Compiles a recipe from a Location.
+    *
+    * @param location The location containing the recipe to be compiled
+    * @return The compilation status
+    * @throws CompileException If there is an error during compilation
+    */
    @Override
    public CompileStatus compile(Location location) throws CompileException {
      try (InputStream is = location.getInputStream()) {
@@ -49,6 +65,13 @@
      }
    }
  
+   /**
+    * Compiles a recipe from a Path.
+    *
+    * @param path The path to the file containing the recipe to be compiled
+    * @return The compilation status
+    * @throws CompileException If there is an error during compilation
+    */
    @Override
    public CompileStatus compile(Path path) throws CompileException {
      try {
@@ -58,6 +81,13 @@
      }
    }
  
+   /**
+    * Internal compile method that handles the actual compilation process.
+    *
+    * @param stream The character stream containing the recipe to be compiled
+    * @return The compilation status
+    * @throws CompileException If there is an error during compilation
+    */
    private CompileStatus compile(CharStream stream) throws CompileException {
      try {
        SyntaxErrorListener errorListener = new SyntaxErrorListener();
@@ -85,4 +115,3 @@
      }
    }
  }
- 

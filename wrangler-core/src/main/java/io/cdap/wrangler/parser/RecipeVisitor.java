@@ -22,6 +22,7 @@
  import io.cdap.wrangler.api.Triplet;
  import io.cdap.wrangler.api.parser.Bool;
  import io.cdap.wrangler.api.parser.BoolList;
+ import io.cdap.wrangler.api.parser.ByteSize;
  import io.cdap.wrangler.api.parser.ColumnName;
  import io.cdap.wrangler.api.parser.ColumnNameList;
  import io.cdap.wrangler.api.parser.DirectiveName;
@@ -33,6 +34,7 @@
  import io.cdap.wrangler.api.parser.Ranges;
  import io.cdap.wrangler.api.parser.Text;
  import io.cdap.wrangler.api.parser.TextList;
+ import io.cdap.wrangler.api.parser.TimeDuration;
  import io.cdap.wrangler.api.parser.Token;
  import org.antlr.v4.runtime.ParserRuleContext;
  import org.antlr.v4.runtime.misc.Interval;
@@ -53,37 +55,31 @@
   * In order to understand what's being invoked, please look at the grammar file
   * <tt>Directive.g4</tt>
   * </p>
-  * .
   *
   * <p>
-  * This class exposes a <code>getTokenGroups</code> method for retrieving the
+  * This class exposes a <code>getCompiledUnit</code> method for retrieving the
   * <code>RecipeSymbol</code> after visiting. The <code>RecipeSymbol</code>
-  * represents
-  * all the <code>TokenGroup</code> for all directives in a recipe. Each
-  * directive
-  * will create a <code>TokenGroup</code>
+  * represents all the <code>TokenGroup</code> for all directives in a recipe. Each
+  * directive will create a <code>TokenGroup</code>
   * </p>
   *
   * <p>
   * As the <code>ParseTree</code> is walking through the call graph, it generates
   * one <code>TokenGroup</code> for each directive in the recipe. Each
-  * <code>TokenGroup</code>
-  * contains parsed <code>Tokens</code> for that directive along with more
-  * information like
-  * <code>SourceInfo</code>. A collection of <code>TokenGroup</code> consistutes
-  * a <code>RecipeSymbol</code>
-  * that is returned by this function.
+  * <code>TokenGroup</code> contains parsed <code>Tokens</code> for that directive along with more
+  * information like <code>SourceInfo</code>. A collection of <code>TokenGroup</code> constitutes
+  * a <code>RecipeSymbol</code> that is returned by this function.
   * </p>
   */
  public final class RecipeVisitor extends DirectivesBaseVisitor<RecipeSymbol.Builder> {
-   private RecipeSymbol.Builder builder = new RecipeSymbol.Builder();
+   private final RecipeSymbol.Builder builder = new RecipeSymbol.Builder();
  
    /**
     * Returns a <code>RecipeSymbol</code> for the recipe being parsed. This
     * object has all the tokens that were successfully parsed along with source
     * information for each directive in the recipe.
     *
-    * @return An compiled object after parsing the recipe.
+    * @return A compiled object after parsing the recipe.
     */
    public RecipeSymbol getCompiledUnit() {
      return builder.build();
@@ -91,8 +87,7 @@
  
    /**
     * A Recipe is made up of Directives and Directives is made up of each
-    * individual
-    * Directive. This method is invoked on every visit to a new directive in the
+    * individual Directive. This method is invoked on every visit to a new directive in the
     * recipe.
     */
    @Override
@@ -103,8 +98,7 @@
  
    /**
     * A Directive can include identifiers, this method extracts that token that is
-    * being
-    * identified as token of type <code>Identifier</code>.
+    * being identified as token of type <code>Identifier</code>.
     */
    @Override
    public RecipeSymbol.Builder visitIdentifier(DirectivesParser.IdentifierContext ctx) {
@@ -114,8 +108,7 @@
  
    /**
     * A Directive can include properties (which are a collection of key and value
-    * pairs),
-    * this method extracts that token that is being identified as token of type
+    * pairs), this method extracts that token that is being identified as token of type
     * <code>Properties</code>.
     */
    @Override
@@ -141,14 +134,12 @@
  
    /**
     * A Pragma is an instruction to the compiler to dynamically load the directives
-    * being specified
-    * from the <code>DirectiveRegistry</code>. These do not affect the data flow.
+    * being specified from the <code>DirectiveRegistry</code>. These do not affect the data flow.
     *
     * <p>
     * E.g. <code>#pragma load-directives test1, test2, test3;</code> will collect
-    * the tokens
-    * test1, test2 and test3 as dynamically loadable directives.
-    * <p>
+    * the tokens test1, test2 and test3 as dynamically loadable directives.
+    * </p>
     */
    @Override
    public RecipeSymbol.Builder visitPragmaLoadDirective(DirectivesParser.PragmaLoadDirectiveContext ctx) {
@@ -160,9 +151,8 @@
    }
  
    /**
-    * A Pragma version is a informational directive to notify compiler about the
-    * grammar that is should
-    * be using to parse the directives below.
+    * A Pragma version is an informational directive to notify compiler about the
+    * grammar that it should be using to parse the directives below.
     */
    @Override
    public RecipeSymbol.Builder visitPragmaVersion(DirectivesParser.PragmaVersionContext ctx) {
@@ -174,8 +164,7 @@
     * A Directive can include number ranges like
     * start:end=value[,start:end=value]*. This
     * visitor method allows you to collect all the number ranges and create a token
-    * type
-    * <code>Ranges</code>.
+    * type <code>Ranges</code>.
     */
    @Override
    public RecipeSymbol.Builder visitNumberRanges(DirectivesParser.NumberRangesContext ctx) {
@@ -187,7 +176,8 @@
        if (text.startsWith("'") && text.endsWith("'")) {
          text = text.substring(1, text.length() - 1);
        }
-       Triplet<Numeric, Numeric, String> val = new Triplet<>(new Numeric(new LazyNumber(numbers.get(0).getText())),
+       Triplet<Numeric, Numeric, String> val = new Triplet<>(
+           new Numeric(new LazyNumber(numbers.get(0).getText())),
            new Numeric(new LazyNumber(numbers.get(1).getText())),
            text);
        output.add(val);
@@ -208,10 +198,8 @@
  
    /**
     * A Directive can consist of column specifiers. These are columns that the
-    * directive
-    * would operate on. When a token of type column is visited, it would generate a
-    * token
-    * type of type <code>ColumnName</code>.
+    * directive would operate on. When a token of type column is visited, it would generate a
+    * token type of type <code>ColumnName</code>.
     */
    @Override
    public RecipeSymbol.Builder visitColumn(DirectivesParser.ColumnContext ctx) {
@@ -221,10 +209,8 @@
  
    /**
     * A Directive can consist of text field. These type of fields are enclosed
-    * within
-    * a single-quote or a double-quote. This visitor method extracts the string
-    * value
-    * within the quotes and creates a token type <code>Text</code>.
+    * within a single-quote or a double-quote. This visitor method extracts the string
+    * value within the quotes and creates a token type <code>Text</code>.
     */
    @Override
    public RecipeSymbol.Builder visitText(DirectivesParser.TextContext ctx) {
@@ -259,7 +245,7 @@
     * A Directive can include a expression or a condition to be evaluated. When
     * such a token type is found, the visitor extracts the expression and generates
     * a token type <code>Expression</code> to be added to the
-    * <code>TokenGroup</code>
+    * <code>TokenGroup</code>.
     */
    @Override
    public RecipeSymbol.Builder visitCondition(DirectivesParser.ConditionContext ctx) {
@@ -275,8 +261,8 @@
  
    /**
     * A Directive has name and in the parsing context it's called a command.
-    * This visitor methods extracts the command and creates a toke type
-    * <code>DirectiveName</code>
+    * This visitor methods extracts the command and creates a token type
+    * <code>DirectiveName</code>.
     */
    @Override
    public RecipeSymbol.Builder visitCommand(DirectivesParser.CommandContext ctx) {
@@ -286,8 +272,7 @@
  
    /**
     * This visitor methods extracts the list of columns specified. It creates a
-    * token
-    * type <code>ColumnNameList</code> to be added to <code>TokenGroup</code>.
+    * token type <code>ColumnNameList</code> to be added to <code>TokenGroup</code>.
     */
    @Override
    public RecipeSymbol.Builder visitColList(DirectivesParser.ColListContext ctx) {
@@ -302,8 +287,7 @@
  
    /**
     * This visitor methods extracts the list of numeric specified. It creates a
-    * token
-    * type <code>NumericList</code> to be added to <code>TokenGroup</code>.
+    * token type <code>NumericList</code> to be added to <code>TokenGroup</code>.
     */
    @Override
    public RecipeSymbol.Builder visitNumberList(DirectivesParser.NumberListContext ctx) {
@@ -318,8 +302,7 @@
  
    /**
     * This visitor methods extracts the list of booleans specified. It creates a
-    * token
-    * type <code>BoolList</code> to be added to <code>TokenGroup</code>.
+    * token type <code>BoolList</code> to be added to <code>TokenGroup</code>.
     */
    @Override
    public RecipeSymbol.Builder visitBoolList(DirectivesParser.BoolListContext ctx) {
@@ -334,8 +317,7 @@
  
    /**
     * This visitor methods extracts the list of strings specified. It creates a
-    * token
-    * type <code>StringList</code> to be added to <code>TokenGroup</code>.
+    * token type <code>StringList</code> to be added to <code>TokenGroup</code>.
     */
    @Override
    public RecipeSymbol.Builder visitStringList(DirectivesParser.StringListContext ctx) {
@@ -349,32 +331,37 @@
      return builder;
    }
  
+   /**
+    * This visitor method handles value tokens that might represent special types like
+    * ByteSize or TimeDuration.
+    */
    @Override
    public RecipeSymbol.Builder visitValue(DirectivesParser.ValueContext ctx) {
      String text = ctx.getText();
  
      // Match known ByteSize patterns like 10KB, 2.5MB
      if (text.matches("(?i)[0-9.]+(KB|MB|GB|TB|B)")) {
- 
-       builder.addToken(new io.cdap.wrangler.api.parser.ByteSize(text));
- 
+       builder.addToken(new ByteSize(text));
      } else if (text.matches("(?i)[0-9.]+(ms|s|sec|m|min)")) {
- 
-       builder.addToken(new io.cdap.wrangler.api.parser.TimeDuration(text));
- 
+       builder.addToken(new TimeDuration(text));
      }
  
      return builder;
    }
  
+   /**
+    * Gets the original source information from the parser context.
+    * 
+    * @param ctx Parser rule context
+    * @return Source information containing line number, column and text
+    */
    private SourceInfo getOriginalSource(ParserRuleContext ctx) {
-     int a = ctx.getStart().getStartIndex();
-     int b = ctx.getStop().getStopIndex();
-     Interval interval = new Interval(a, b);
+     int startIndex = ctx.getStart().getStartIndex();
+     int stopIndex = ctx.getStop().getStopIndex();
+     Interval interval = new Interval(startIndex, stopIndex);
      String text = ctx.start.getInputStream().getText(interval);
-     int lineno = ctx.getStart().getLine();
+     int lineNo = ctx.getStart().getLine();
      int column = ctx.getStart().getCharPositionInLine();
-     return new SourceInfo(lineno, column, text);
+     return new SourceInfo(lineNo, column, text);
    }
  }
- 

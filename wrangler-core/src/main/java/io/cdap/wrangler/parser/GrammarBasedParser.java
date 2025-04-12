@@ -45,16 +45,40 @@
    private final String recipe;
    private final DirectiveContext context;
  
+   /**
+    * Constructor with namespace, recipe and registry.
+    *
+    * @param namespace namespace for directives
+    * @param recipe string representation of the recipe
+    * @param registry directive registry
+    */
    public GrammarBasedParser(String namespace, String recipe, DirectiveRegistry registry) {
      this(namespace, recipe, registry, new NoOpDirectiveContext());
    }
  
+   /**
+    * Constructor with namespace, directives array, registry and context.
+    *
+    * @param namespace namespace for directives
+    * @param directives array of directives
+    * @param registry directive registry
+    * @param context directive context
+    */
    public GrammarBasedParser(String namespace, String[] directives,
-                             DirectiveRegistry registry, DirectiveContext context) {
+                            DirectiveRegistry registry, DirectiveContext context) {
      this(namespace, Joiner.on(EOL).join(directives), registry, context);
    }
  
-   public GrammarBasedParser(String namespace, String recipe, DirectiveRegistry registry, DirectiveContext context) {
+   /**
+    * Constructor with namespace, recipe, registry and context.
+    *
+    * @param namespace namespace for directives
+    * @param recipe string representation of the recipe
+    * @param registry directive registry
+    * @param context directive context
+    */
+   public GrammarBasedParser(String namespace, String recipe, 
+                            DirectiveRegistry registry, DirectiveContext context) {
      this.namespace = namespace;
      this.recipe = recipe;
      this.registry = registry;
@@ -65,6 +89,7 @@
     * Parses the recipe provided to this class and instantiate a list of {@link Directive} from the recipe.
     *
     * @return List of {@link Directive}.
+    * @throws RecipeException if there's an error parsing the recipe
     */
    @Override
    public List<Directive> parse() throws RecipeException {
@@ -77,7 +102,8 @@
          DirectiveInfo info = registry.get(namespace, command);
          if (info == null) {
            throw new DirectiveNotFoundException(
-             String.format("Directive '%s' not found in system and user scope. Check the name of directive.", command)
+             String.format("Directive '%s' not found in system and user scope. "
+               + "Check the name of directive.", command)
            );
          }
  
@@ -87,7 +113,6 @@
            Arguments arguments = new MapArguments(definition, tokenGroup);
            directive.initialize(arguments);
            result.add(directive);
- 
          } catch (IllegalAccessException | InstantiationException e) {
            throw new DirectiveLoadException(e.getMessage(), e);
          }
@@ -101,4 +126,3 @@
      }
    }
  }
- 

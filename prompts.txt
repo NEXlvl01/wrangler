@@ -1,0 +1,59 @@
+# AI Assistance Prompts for Wrangler Enhancement Project
+
+## Grammar Design Prompts
+
+Prompt 1: How to write ANTLR grammar rules to recognize byte sizes like "10KB", "1.5MB", and "2GB" with floating point support?
+
+Prompt 2: What's the best way to define ANTLR fragment rules for byte units (B, KB, MB, GB) and time units (ms, s, min, h) to handle case variations?
+
+Prompt 3: How can I extend the existing Wrangler grammar to include new token types without disrupting existing functionality?
+
+## Implementation Prompts
+
+Prompt 4: What's the most efficient regex pattern for extracting numeric values and unit parts from strings like "10.5MB" or "2.5s"?
+
+Prompt 5: Can you suggest a class structure for ByteSize.java and TimeDuration.java that extends the Token class in Wrangler?
+
+Prompt 6: What's the best approach for unit conversion between different byte size units (KB, MB, GB) accounting for both binary (1024-based) and decimal (1000-based) systems?
+
+Prompt 7: How to implement proper floating point handling for unit conversions to avoid precision errors?
+
+## Parser Integration Prompts
+
+Prompt 8: How to implement visitor methods in RecipeVisitor.java to handle the new ByteSize and TimeDuration token types?
+
+Prompt 9: What modifications are needed to properly register new token types in the TokenType enum while maintaining backward compatibility?
+
+Prompt 10: Best practices for extending the UsageDefinition to support new token types in directive arguments?
+
+## Directive Implementation Prompts
+
+Prompt 11: How to implement an aggregation directive in CDAP Wrangler that accumulates values across multiple rows?
+
+Prompt 12: What's the recommended pattern for using ExecutorContext's Store to maintain aggregation state across rows?
+
+Prompt 13: What's the best way to implement the Finisher interface for generating aggregate results after processing all rows?
+
+Prompt 14: How to handle unit conversion in the aggregation directive to support output in different units (e.g., bytes to MB, ms to seconds)?
+
+## Testing Prompts
+
+Prompt 15: How to write comprehensive unit tests for ByteSize and TimeDuration classes covering various input formats and edge cases?
+
+Prompt 16: What's the best approach for testing ANTLR grammar modifications to ensure proper parsing of new token types?
+
+Prompt 17: How to use TestingRig in Wrangler to verify directive functionality with sample input rows?
+
+Prompt 18: What test cases should be included to verify proper aggregation and unit conversion in the aggregate-stats directive?
+
+## Error Handling Prompts
+
+Prompt 19: What's the best way to handle invalid input formats for byte sizes and time durations?
+
+Prompt 20: How to implement proper exception handling in the directive execution flow to provide meaningful error messages?
+
+## Documentation Prompts
+
+Prompt 21: What should be included in the README to document the new token types and aggregate-stats directive usage?
+
+Prompt 22: How to format code examples in documentation to demonstrate proper usage of the new features?

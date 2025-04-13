@@ -23,11 +23,12 @@
  import io.cdap.wrangler.api.parser.ByteSize;
  import io.cdap.wrangler.api.parser.TimeDuration;
  import io.cdap.wrangler.api.parser.Token;
- 
+ import io.cdap.wrangler.api.parser.TokenType;
  import io.cdap.wrangler.api.parser.UsageDefinition;
  
  import java.util.Collections;
  import java.util.List;
+ 
  /**
   * A directive that aggregates total byte size and time duration from input rows.
   *
@@ -60,7 +61,6 @@
   *
   * @since 4.12.0
   */
- 
  public class AggregateStats implements Directive {
  
    private String sizeColumn;
@@ -68,19 +68,38 @@
    private String outputSizeColumn;
    private String outputTimeColumn;
  
+   /**
+    * Defines the usage of the directive.
+    * @return usage definition with argument specifications
+    */
    @Override
    public UsageDefinition define() {
-     return UsageDefinition.builder("aggregate-stats").build();
+     UsageDefinition.Builder builder = UsageDefinition.builder("aggregate-stats");
+     builder.define("size-column", TokenType.COLUMN_NAME);
+     builder.define("duration-column", TokenType.COLUMN_NAME);
+     builder.define("output-size-column", TokenType.COLUMN_NAME);
+     builder.define("output-time-column", TokenType.COLUMN_NAME);
+     return builder.build();
    }
  
+   /**
+    * Initializes the directive with given arguments.
+    * @param arguments Arguments passed to the directive
+    */
    @Override
    public void initialize(Arguments arguments) {
-     sizeColumn = arguments.<Token>value("0").value().toString();
-     durationColumn = arguments.<Token>value("1").value().toString();
-     outputSizeColumn = arguments.<Token>value("2").value().toString();
-     outputTimeColumn = arguments.<Token>value("3").value().toString();
+     sizeColumn = arguments.<Token>value("size-column").value().toString();
+     durationColumn = arguments.<Token>value("duration-column").value().toString();
+     outputSizeColumn = arguments.<Token>value("output-size-column").value().toString();
+     outputTimeColumn = arguments.<Token>value("output-time-column").value().toString();
    }
  
+   /**
+    * Executes the directive on the given rows.
+    * @param rows List of rows to process
+    * @param context Execution context
+    * @return Single row containing aggregated results
+    */
    @Override
    public List<Row> execute(List<Row> rows, ExecutorContext context) {
      long totalBytes = 0L;
@@ -110,9 +129,11 @@
      return Collections.singletonList(result);
    }
  
+   /**
+    * Cleans up resources when directive is no longer needed.
+    */
    @Override
    public void destroy() {
      // Nothing to clean up
    }
  }
- 

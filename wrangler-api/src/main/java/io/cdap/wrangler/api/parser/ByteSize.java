@@ -99,4 +99,3 @@
          return TokenType.BYTE_SIZE;
      }
  }
- 

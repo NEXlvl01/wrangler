@@ -14,126 +14,158 @@
  *  limitations under the License.
  */
 
- package io.cdap.directives.column;
+package io.cdap.directives.column;
 
- import io.cdap.wrangler.api.Arguments;
- import io.cdap.wrangler.api.Directive;
- import io.cdap.wrangler.api.ExecutorContext;
- import io.cdap.wrangler.api.Row;
- import io.cdap.wrangler.api.parser.ByteSize;
- import io.cdap.wrangler.api.parser.TimeDuration;
- import io.cdap.wrangler.api.parser.Token;
- import io.cdap.wrangler.api.parser.TokenType;
- import io.cdap.wrangler.api.parser.UsageDefinition;
- 
- import java.util.Collections;
- import java.util.List;
- 
- /**
-  * A directive that aggregates total byte size and time duration from input rows.
-  *
-  * <p>This directive processes all rows and calculates the cumulative sum of values
-  * from two specified columns: one representing sizes (e.g., file sizes, memory usage)
-  * and the other representing durations (e.g., execution time, latency).
-  * It supports inputs in both numeric format (e.g., <code>1024</code>) and string format
-  * (e.g., <code>"1KB"</code>, <code>"2s"</code>) and converts them to bytes and milliseconds respectively.</p>
-  *
-  * <p>The directive then emits a single row with the total size and duration,
-  * storing them in user-defined output columns.</p>
-  *
-  * <b>Usage:</b>
-  * <pre>
-  * aggregate-stats sizeColumn durationColumn outputSizeColumn outputDurationColumn
-  * </pre>
-  *
-  * <b>Example:</b>
-  * <pre>
-  * aggregate-stats file_size execution_time total_size total_time
-  * </pre>
-  *
-  * <b>Arguments:</b>
-  * <ul>
-  *   <li>0 - Name of the column containing the byte sizes (String or Long)</li>
-  *   <li>1 - Name of the column containing the durations (String or Long)</li>
-  *   <li>2 - Name of the output column to store total byte size (Long)</li>
-  *   <li>3 - Name of the output column to store total duration (Long, in milliseconds)</li>
-  * </ul>
-  *
-  * @since 4.12.0
-  */
- public class AggregateStats implements Directive {
- 
-   private String sizeColumn;
-   private String durationColumn;
-   private String outputSizeColumn;
-   private String outputTimeColumn;
- 
-   /**
-    * Defines the usage of the directive.
-    * @return usage definition with argument specifications
-    */
-   @Override
-   public UsageDefinition define() {
-     UsageDefinition.Builder builder = UsageDefinition.builder("aggregate-stats");
-     builder.define("size-column", TokenType.COLUMN_NAME);
-     builder.define("duration-column", TokenType.COLUMN_NAME);
-     builder.define("output-size-column", TokenType.COLUMN_NAME);
-     builder.define("output-time-column", TokenType.COLUMN_NAME);
-     return builder.build();
-   }
- 
-   /**
-    * Initializes the directive with given arguments.
-    * @param arguments Arguments passed to the directive
-    */
-   @Override
-   public void initialize(Arguments arguments) {
-     sizeColumn = arguments.<Token>value("size-column").value().toString();
-     durationColumn = arguments.<Token>value("duration-column").value().toString();
-     outputSizeColumn = arguments.<Token>value("output-size-column").value().toString();
-     outputTimeColumn = arguments.<Token>value("output-time-column").value().toString();
-   }
- 
-   /**
-    * Executes the directive on the given rows.
-    * @param rows List of rows to process
-    * @param context Execution context
-    * @return Single row containing aggregated results
-    */
-   @Override
-   public List<Row> execute(List<Row> rows, ExecutorContext context) {
-     long totalBytes = 0L;
-     long totalMillis = 0L;
- 
-     for (Row row : rows) {
-       Object sizeVal = row.getValue(sizeColumn);
-       Object timeVal = row.getValue(durationColumn);
- 
-       if (sizeVal instanceof Long) {
-         totalBytes += (Long) sizeVal;
-       } else if (sizeVal instanceof String) {
-         totalBytes += new ByteSize((String) sizeVal).getBytes();
-       }
- 
-       if (timeVal instanceof Long) {
-         totalMillis += (Long) timeVal;
-       } else if (timeVal instanceof String) {
-         totalMillis += new TimeDuration((String) timeVal).getMilliseconds();
-       }
-     }
- 
-     Row result = new Row();
-     result.add(outputSizeColumn, totalBytes);
-     result.add(outputTimeColumn, totalMillis);
- 
-     return Collections.singletonList(result);
-   }
- 
-   /**
-    * Cleans up resources when directive is no longer needed.
-    */
-   @Override
-   public void destroy() {
-     // Nothing to clean up
-   }
- }
+import io.cdap.wrangler.api.Arguments;
+import io.cdap.wrangler.api.Directive;
+import io.cdap.wrangler.api.ExecutorContext;
+import io.cdap.wrangler.api.Row;
+import io.cdap.wrangler.api.parser.ByteSize;
+import io.cdap.wrangler.api.parser.TimeDuration;
+import io.cdap.wrangler.api.parser.Token;
+import io.cdap.wrangler.api.parser.TokenType;
+import io.cdap.wrangler.api.parser.UsageDefinition;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * A directive that aggregates total byte size and time duration from input
+ * rows.
+ *
+ * <p>
+ * This directive processes all rows and calculates the cumulative sum of values
+ * from two specified columns: one representing sizes (e.g., file sizes, memory
+ * usage)
+ * and the other representing durations (e.g., execution time, latency).
+ * It supports inputs in both numeric format (e.g., <code>1024</code>) and
+ * string format
+ * (e.g., <code>"1KB"</code>, <code>"2s"</code>) and converts them to bytes and
+ * milliseconds respectively.
+ * </p>
+ *
+ * <p>
+ * The directive then emits a single row with the total size and duration,
+ * storing them in user-defined output columns.
+ * </p>
+ *
+ * <b>Usage:</b>
+ * 
+ * <pre>
+ * aggregate-stats sizeColumn durationColumn outputSizeColumn outputDurationColumn
+ * </pre>
+ *
+ * <b>Example:</b>
+ * 
+ * <pre>
+ * aggregate-stats file_size execution_time total_size total_time
+ * </pre>
+ *
+ * <b>Arguments:</b>
+ * <ul>
+ * <li>0 - Name of the column containing the byte sizes (String or Long)</li>
+ * <li>1 - Name of the column containing the durations (String or Long)</li>
+ * <li>2 - Name of the output column to store total byte size (Long)</li>
+ * <li>3 - Name of the output column to store total duration (Long, in
+ * milliseconds)</li>
+ * </ul>
+ *
+ * @since 4.12.0
+ */
+public class AggregateStats implements Directive {
+
+  private String sizeColumn;
+  private String durationColumn;
+  private String outputSizeColumn;
+  private String outputTimeColumn;
+
+  /**
+   * Defines the usage of the directive.
+   * 
+   * @return usage definition with argument specifications
+   */
+  @Override
+  public UsageDefinition define() {
+    UsageDefinition.Builder builder = UsageDefinition.builder("aggregate-stats");
+    builder.define("size-column", TokenType.COLUMN_NAME);
+    builder.define("duration-column", TokenType.COLUMN_NAME);
+    builder.define("output-size-column", TokenType.COLUMN_NAME);
+    builder.define("output-time-column", TokenType.COLUMN_NAME);
+    return builder.build();
+  }
+
+  /**
+   * Initializes the directive with given arguments.
+   * 
+   * @param arguments Arguments passed to the directive
+   */
+  @Override
+  public void initialize(Arguments arguments) {
+    Token sizeToken = arguments.value("size-column");
+    Token durationToken = arguments.value("duration-column");
+    Token outputSizeToken = arguments.value("output-size-column");
+    Token outputTimeToken = arguments.value("output-time-column");
+
+    if (sizeToken == null) {
+      throw new IllegalArgumentException("Missing required argument: size-column");
+    }
+    if (durationToken == null) {
+      throw new IllegalArgumentException("Missing required argument: duration-column");
+    }
+    if (outputSizeToken == null) {
+      throw new IllegalArgumentException("Missing required argument: output-size-column");
+    }
+    if (outputTimeToken == null) {
+      throw new IllegalArgumentException("Missing required argument: output-time-column");
+    }
+
+    sizeColumn = sizeToken.value().toString();
+    durationColumn = durationToken.value().toString();
+    outputSizeColumn = outputSizeToken.value().toString();
+    outputTimeColumn = outputTimeToken.value().toString();
+  }
+
+  /**
+   * Executes the directive on the given rows.
+   * 
+   * @param rows    List of rows to process
+   * @param context Execution context
+   * @return Single row containing aggregated results
+   */
+  @Override
+  public List<Row> execute(List<Row> rows, ExecutorContext context) {
+    long totalBytes = 0L;
+    long totalMillis = 0L;
+
+    for (Row row : rows) {
+      Object sizeVal = row.getValue(sizeColumn);
+      Object timeVal = row.getValue(durationColumn);
+
+      if (sizeVal instanceof Long) {
+        totalBytes += (Long) sizeVal;
+      } else if (sizeVal instanceof String) {
+        totalBytes += new ByteSize((String) sizeVal).getBytes();
+      }
+
+      if (timeVal instanceof Long) {
+        totalMillis += (Long) timeVal;
+      } else if (timeVal instanceof String) {
+        totalMillis += new TimeDuration((String) timeVal).getMilliseconds();
+      }
+    }
+
+    Row result = new Row();
+    result.add(outputSizeColumn, totalBytes);
+    result.add(outputTimeColumn, totalMillis);
+
+    return Collections.singletonList(result);
+  }
+
+  /**
+   * Cleans up resources when directive is no longer needed.
+   */
+  @Override
+  public void destroy() {
+    // Nothing to clean up
+  }
+}
